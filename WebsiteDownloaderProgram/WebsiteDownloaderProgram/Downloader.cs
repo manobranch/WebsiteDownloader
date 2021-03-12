@@ -1,6 +1,8 @@
-﻿using HtmlAgilityPack;
+﻿using Dasync.Collections;
+using HtmlAgilityPack;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -66,10 +68,11 @@ namespace WebsiteDownloaderProgram
 
                 var nodeObject = new NodeObject(folderBase, document.ParsedText, aTagList, new List<ImgTag>());
 
-                foreach (var aTag in nodeObject.ATags)
+                await nodeObject.ATags.ParallelForEachAsync(async aTag =>
                 {
                     await GetHtml(domain, aTag.Path, folderBase);
-                }
+                    
+                }, maxDegreeOfParallelism: 10);
 
                 await PrintHtml(folderPath, nodeObject.ParsedText);
             }
@@ -119,7 +122,7 @@ namespace WebsiteDownloaderProgram
                     smallCounter++;
 
                     if (smallCounter < 15)
-                        aTagList.Add(new Atag(folderBase, domain, item.OuterHtml));
+                        aTagList.Add(new Atag(item.OuterHtml));
                 }
             }
 
