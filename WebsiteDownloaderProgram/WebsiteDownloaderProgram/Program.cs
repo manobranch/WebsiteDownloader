@@ -5,22 +5,20 @@ namespace WebsiteDownloaderProgram
 {
     class Program
     {
-        private static string webSiteAddress = @"https://tretton37.com/";
+        private static string WebSiteAddress = @"https://tretton37.com";
+        private static string RootFolderName = @"tretton37";
 
-        static void Main(string[] args)
+
+        static void Main()
         {
             try
             {
-                if (args?.Length > 0)
-                {
-                    webSiteAddress = args[0];
-                }
-
                 Console.WriteLine("Starting program");
 
-                var rootFolderName = GetRootFolderName();
+                DeletePreviousStartFolder(RootFolderName);
 
-                new Downloader().Run(webSiteAddress, rootFolderName);
+                var task = Downloader.Run(WebSiteAddress, RootFolderName);
+                task.Wait();
 
                 Console.WriteLine("Ending program");
                 Console.ReadLine();
@@ -32,21 +30,12 @@ namespace WebsiteDownloaderProgram
             }
         }
 
-        static string GetRootFolderName()
+        static void DeletePreviousStartFolder(string startFolderName)
         {
-            string startFolderName = GetStartFolderName();
-
-            if (!Directory.Exists(startFolderName))
+            if (Directory.Exists(startFolderName))
             {
-                Directory.CreateDirectory(startFolderName);
+                Directory.Delete(startFolderName, recursive: true);
             }
-
-            return startFolderName;
-        }
-
-        private static string GetStartFolderName()
-        {
-            return $"tretton37_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm_ss")}";
         }
     }
 }

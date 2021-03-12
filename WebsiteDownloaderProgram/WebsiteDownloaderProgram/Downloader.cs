@@ -7,54 +7,102 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using WebsiteDownloaderProgram.Objects;
 
 namespace WebsiteDownloaderProgram
 {
     public class Downloader
     {
+        #region Properties
+
+        public static List<string> VisitedUrls { get; set; }
+
+        #endregion
+
         #region Startup region
 
-        public static string RootFolder { get; set; }
-
-        public Downloader()
+        public static async Task Run(string domain, string directory)
         {
-        }
-
-        public void Run(string address, string rootFolderName)
-        {
-            RootFolder = rootFolderName;
-            ToScreen($"Downloading website: {address}");
-            
-            TheFirstTest(address);
-
+            VisitedUrls = new List<string>();
+            await GetHtml(domain, "", directory);
         }
 
         #endregion
 
-        #region Download methods
+        // MNTODO Remove Counter. Useful during development
+        public static int Counter { get; set; }
 
-        private void TheFirstTest(string address)
+        #region Download methods
+        public static async Task GetHtml(string domain, string subDirectory, string folderBase)
         {
-            // MNTODO make this method async
+            var address = $"{domain}{subDirectory}";
+            var folderPath = $"{folderBase}{subDirectory}";
+
+
+            if (VisitedUrls.Contains(address))
+            {
+                return;
+            }
+
+            VisitedUrls.Add(address);
+
             try
             {
-                Uri URL = new Uri(address);
+                if (!Directory.Exists(folderPath))
+                {
+                    Counter++;
+                    Directory.CreateDirectory(folderPath);
+                    ToScreen($"{Counter}_ Downloading address: {address}");
+                }
+                else
+                {
+                    return;
+                }
+
+                var URL = new Uri(address);
 
                 HtmlWeb web = new HtmlWeb();
                 HtmlDocument document = web.Load(URL);
 
-                ExamplePrint(document.ParsedText);
-                
-                // MNTODO: Start working with nodes
-                //var nodes = document.DocumentNode.SelectNodes("//a[@href]").ToArray();
+                List<HtmlNode> documentATags = new List<HtmlNode>();
 
-                //foreach (var item in nodes)
-                //{
-                //    ToScreen(item.OuterHtml);
+                try
+                {
+                    documentATags = document.DocumentNode.SelectNodes("//a[@href]").ToList();
+                }
+                catch (Exception)
+                {
+                    var stophere = "asdasdf";
+                }
 
-                //    var something = "asdfasdfd";
-                //}
+                var aTagList = new List<Atag>();
+
+                int smallCounter = 0;
+
+                foreach (var item in documentATags)
+                {
+                    if (Atag.ValidateAHref(item.OuterHtml, subDirectory))
+                    {
+                        smallCounter++;
+
+                        if (smallCounter < 15)
+                            aTagList.Add(new Atag(folderBase, domain, item.OuterHtml));
+                    }
+                }
+
+                // MNTODO add images
+                //var imgTagsList = document.DocumentNode.SelectNodes("//img[@src]").ToList();
+
+                var nodeObject = new NodeObject(folderBase, document.ParsedText, aTagList, new List<ImgTag>());
+
+                foreach (var aTag in nodeObject.ATags)
+                {
+                    await GetHtml(domain, aTag.Path, folderBase);
+                }
+
+                await PrintHtml(folderPath, nodeObject.ParsedText);
             }
             catch (Exception e)
             {
@@ -63,16 +111,16 @@ namespace WebsiteDownloaderProgram
             }
         }
 
-        public static async Task ExamplePrint(string text)
+        public static async Task PrintHtml(string directory, string htmlText)
         {
-            await File.WriteAllTextAsync($"{RootFolder}\\WriteText.txt", text);
+            await File.WriteAllTextAsync($"{directory}\\WriteText.txt", htmlText);
         }
 
         #endregion
 
         #region Utility methods
 
-        private void ToScreen(string text)
+        private static void ToScreen(string text)
         {
             Console.WriteLine(text);
         }
