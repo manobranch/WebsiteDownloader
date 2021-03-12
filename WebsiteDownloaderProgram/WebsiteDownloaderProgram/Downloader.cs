@@ -47,50 +47,19 @@ namespace WebsiteDownloaderProgram
             }
 
             VisitedUrls.Add(address);
+            ToScreen($"{Counter}_ Downloading address: {address}");
 
             try
             {
-                if (!Directory.Exists(folderPath))
-                {
-                    Counter++;
-                    Directory.CreateDirectory(folderPath);
-                    ToScreen($"{Counter}_ Downloading address: {address}");
-                }
-                else
-                {
+                if (!CreateFolder(folderPath))
                     return;
-                }
-
+                
                 var URL = new Uri(address);
 
                 HtmlWeb web = new HtmlWeb();
                 HtmlDocument document = web.Load(URL);
 
-                List<HtmlNode> documentATags = new List<HtmlNode>();
-
-                try
-                {
-                    documentATags = document.DocumentNode.SelectNodes("//a[@href]").ToList();
-                }
-                catch (Exception)
-                {
-                    var stophere = "asdasdf";
-                }
-
-                var aTagList = new List<Atag>();
-
-                int smallCounter = 0;
-
-                foreach (var item in documentATags)
-                {
-                    if (Atag.ValidateAHref(item.OuterHtml, subDirectory))
-                    {
-                        smallCounter++;
-
-                        if (smallCounter < 15)
-                            aTagList.Add(new Atag(folderBase, domain, item.OuterHtml));
-                    }
-                }
+                var aTagList = GetATagList(document, domain, subDirectory, folderBase);
 
                 // MNTODO add images
                 //var imgTagsList = document.DocumentNode.SelectNodes("//img[@src]").ToList();
@@ -109,6 +78,52 @@ namespace WebsiteDownloaderProgram
                 ToScreen(e.Message);
                 throw;
             }
+        }
+
+        private static bool CreateFolder(string folderPath)
+        {
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+                
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private static List<Atag> GetATagList(HtmlDocument document, string domain, string subDirectory, string folderBase)
+        {
+            var documentATags = new List<HtmlNode>();
+
+            try
+            {
+                documentATags = document.DocumentNode.SelectNodes("//a[@href]").ToList();
+            }
+            catch (Exception)
+            {
+                var stophere = "asdasdf";
+            }
+
+            var aTagList = new List<Atag>();
+
+            // MNTODO remove smallCounter after development
+            int smallCounter = 0;
+
+            foreach (var item in documentATags)
+            {
+                if (Atag.ValidateAHref(item.OuterHtml, subDirectory))
+                {
+                    smallCounter++;
+
+                    if (smallCounter < 15)
+                        aTagList.Add(new Atag(folderBase, domain, item.OuterHtml));
+                }
+            }
+
+            return aTagList;
         }
 
         public static async Task PrintHtml(string directory, string htmlText)
