@@ -6,15 +6,51 @@ namespace WebsiteDownloaderProgram.Objects
 {
     public class ImgTag
     {
-        public string DirectoryLevel { get; set; }
-        public string BasePath { get; set; }
-        public string LinkPath { get; set; }
+        public string Path { get; set; }
+        public string FileName { get; set; }
 
-        public ImgTag(string directoryLevel, string basePath, string linkPath)
+        public ImgTag()
         {
-            DirectoryLevel = directoryLevel;
-            BasePath = basePath;
-            LinkPath = linkPath;
+
+        }
+
+        public ImgTag(string path)
+        {
+            Path = FormatPath(path);
+            FileName = FormatFileName(Path);
+        }
+
+        internal static bool ValidateImg(string imgPath)
+        {
+            var formatedLinkPath = FormatPathStatic(imgPath);
+
+            if (formatedLinkPath.ToLower().EndsWith(".svg"))
+                return true;
+
+            return false;
+        }
+
+        private string FormatPath(string path)
+        {
+            // "<img src=\"assets/i/delivery_teams.svg\">"
+            var splittedPath = path.Split('"');
+
+            return splittedPath[1];
+        }
+
+        private static string FormatPathStatic(string path)
+        {
+            // "<img src=\"assets/i/delivery_teams.svg\">"
+            var splittedPath = path.Split('"');
+
+            return splittedPath[1];
+        }
+
+        private string FormatFileName(string path)
+        {
+            var splittedPath = path.Split('/');
+            
+            return splittedPath[splittedPath.Length -1];
         }
     }
 }

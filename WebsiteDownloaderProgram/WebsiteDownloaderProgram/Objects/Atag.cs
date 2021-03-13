@@ -38,18 +38,18 @@ namespace WebsiteDownloaderProgram.Objects
         {
             //<a href=\"/who-we-are\">Who we are</a>
 
-            var asdf = link.Split('"');
+            var splittedLink = link.Split('"');
 
-            return asdf[1];
+            return splittedLink[1];
         }
 
         private string FormatLinkPath(string link)
         {
             //<a href=\"/who-we-are\">Who we are</a>
 
-            var asdf = link.Split('"');
+            var splittedLink = link.Split('"');
 
-            return asdf[1];
+            return splittedLink[1];
         }
     }
 }

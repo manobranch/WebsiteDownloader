@@ -33,10 +33,8 @@ namespace WebsiteDownloaderProgram
 
         #endregion
 
-        // MNTODO Remove Counter. Useful during development
-        public static int Counter { get; set; }
-
         #region Download methods
+
         public static async Task GetHtml(string domain, string subDirectory, string folderBase)
         {
             var address = $"{domain}{subDirectory}";
@@ -44,34 +42,38 @@ namespace WebsiteDownloaderProgram
 
 
             if (VisitedUrls.Contains(address))
-            {
                 return;
-            }
 
             VisitedUrls.Add(address);
-            ToScreen($"{Counter}_ Downloading address: {address}");
+            ToScreen($"Downloading address: {address}");
 
             try
             {
                 if (!CreateFolder(folderPath))
                     return;
-                
+
                 var URL = new Uri(address);
 
                 HtmlWeb web = new HtmlWeb();
                 HtmlDocument document = web.Load(URL);
 
-                var aTagList = GetATagList(document, domain, subDirectory, folderBase);
+                var aTagList = GetATagList(document, subDirectory);
+                var imgTagsList = GetImgList(document);
+                var nodeObject = new NodeObject(folderBase, document.ParsedText, aTagList, imgTagsList);
+               
+                using (WebClient client = new WebClient())
+                {
+                    await nodeObject.ImgTags.ParallelForEachAsync(async imgTag =>
+                    {
+                        client.DownloadFile(new Uri($"{domain}/{imgTag.Path}"), $"{folderPath}/{imgTag.FileName}");
 
-                // MNTODO add images
-                //var imgTagsList = document.DocumentNode.SelectNodes("//img[@src]").ToList();
-
-                var nodeObject = new NodeObject(folderBase, document.ParsedText, aTagList, new List<ImgTag>());
+                    }, maxDegreeOfParallelism: 10);
+                }
 
                 await nodeObject.ATags.ParallelForEachAsync(async aTag =>
                 {
                     await GetHtml(domain, aTag.Path, folderBase);
-                    
+
                 }, maxDegreeOfParallelism: 10);
 
                 await PrintHtml(folderPath, nodeObject.ParsedText);
@@ -88,7 +90,7 @@ namespace WebsiteDownloaderProgram
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
-                
+
                 return true;
             }
             else
@@ -97,7 +99,7 @@ namespace WebsiteDownloaderProgram
             }
         }
 
-        private static List<Atag> GetATagList(HtmlDocument document, string domain, string subDirectory, string folderBase)
+        private static List<Atag> GetATagList(HtmlDocument document, string subDirectory)
         {
             var documentATags = new List<HtmlNode>();
 
@@ -127,6 +129,34 @@ namespace WebsiteDownloaderProgram
             }
 
             return aTagList;
+        }
+
+        private static List<ImgTag> GetImgList(HtmlDocument document)
+        {
+            var documentImages = new List<HtmlNode>();
+
+            try
+            {
+                documentImages = document.DocumentNode.SelectNodes("//img[@src]").ToList();
+            }
+            catch (Exception)
+            {
+                var stophere = "asdfasdf";
+            }
+
+            var imgList = new List<ImgTag>();
+
+            foreach (var item in documentImages)
+            {
+                if (ImgTag.ValidateImg(item.OuterHtml))
+                {
+                    imgList.Add(new ImgTag(item.OuterHtml));
+                }
+            }
+
+            return imgList.Select(r => new ImgTag { Path = r.Path, FileName = r.FileName })
+                            .GroupBy(x => x.Path)
+                            .Select(x => x.First()).ToList();
         }
 
         public static async Task PrintHtml(string directory, string htmlText)
