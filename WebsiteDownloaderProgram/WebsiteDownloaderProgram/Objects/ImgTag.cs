@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace WebsiteDownloaderProgram.Objects
 {
@@ -22,19 +20,16 @@ namespace WebsiteDownloaderProgram.Objects
 
         internal static bool ValidateImg(string imgPath)
         {
-            var formatedLinkPath = FormatPathStatic(imgPath);
-
-            if (formatedLinkPath.ToLower().EndsWith(".svg"))
+            if (FormatPathStatic(imgPath).EndsWith(".svg"))
                 return true;
-
-            return false;
+            else
+                return false;
         }
 
         private string FormatPath(string path)
         {
             // "<img src=\"assets/i/delivery_teams.svg\">"
             var splittedPath = path.Split('"');
-
             return splittedPath[1];
         }
 
@@ -42,15 +37,13 @@ namespace WebsiteDownloaderProgram.Objects
         {
             // "<img src=\"assets/i/delivery_teams.svg\">"
             var splittedPath = path.Split('"');
-
-            return splittedPath[1];
+            return splittedPath[1].ToLower();
         }
 
         private string FormatFileName(string path)
         {
             var splittedPath = path.Split('/');
-            
-            return splittedPath[splittedPath.Length -1];
+            return splittedPath[splittedPath.Length - 1];
         }
     }
 }

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace WebsiteDownloaderProgram.Objects
 {
@@ -37,18 +34,14 @@ namespace WebsiteDownloaderProgram.Objects
         private static string FormatLinkPathStatic(string link)
         {
             //<a href=\"/who-we-are\">Who we are</a>
-
             var splittedLink = link.Split('"');
-
             return splittedLink[1];
         }
 
         private string FormatLinkPath(string link)
         {
             //<a href=\"/who-we-are\">Who we are</a>
-
             var splittedLink = link.Split('"');
-
             return splittedLink[1];
         }
     }

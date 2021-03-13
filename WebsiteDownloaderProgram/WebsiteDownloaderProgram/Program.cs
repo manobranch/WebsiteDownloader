@@ -5,9 +5,8 @@ namespace WebsiteDownloaderProgram
 {
     class Program
     {
-        private static string WebSiteAddress = @"https://tretton37.com";
-        private static string RootFolderName = @"tretton37";
-
+        private static readonly string WebSiteAddress = @"https://tretton37.com";
+        private static readonly string RootFolderName = @"tretton37";
 
         static void Main()
         {
@@ -20,7 +19,8 @@ namespace WebsiteDownloaderProgram
                 var task = Downloader.Run(WebSiteAddress, RootFolderName);
                 task.Wait();
 
-                Console.WriteLine("Ending program");
+
+                Console.Write(" - Ending program \nPress ENTER to quit");
                 Console.ReadLine();
             }
             catch (Exception e)
@@ -34,6 +34,8 @@ namespace WebsiteDownloaderProgram
         {
             if (Directory.Exists(startFolderName))
             {
+                Console.WriteLine("Delete previous folder");
+
                 Directory.Delete(startFolderName, recursive: true);
             }
         }
