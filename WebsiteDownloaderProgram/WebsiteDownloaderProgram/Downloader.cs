@@ -33,55 +33,51 @@ namespace WebsiteDownloaderProgram
 
         public static async Task GetHtml(string domain, string subDirectory, string folderBase)
         {
+            // Set up for method
             var address = $"{domain}{subDirectory}";
             var folderPath = $"{folderBase}{subDirectory}";
+            var URL = new Uri(address);
 
+            // Basic validation 
             if (VisitedUrls.Contains(address))
                 return;
 
             VisitedUrls.Add(address);
 
-            try
+            if (!CreateFolder(folderPath))
+                return;
+
+            // Request URL
+            ToScreen($"Requesting address: {URL}");
+            HtmlWeb web = new HtmlWeb();
+            HtmlDocument document = web.Load(URL);
+
+            // Map response information
+            var aTagList = GetATagList(document, subDirectory);
+            var imgTagsList = GetImgList(document);
+            var nodeObject = new NodeObject(document.ParsedText, aTagList, imgTagsList);
+
+            // Download files
+            using (WebClient client = new WebClient())
             {
-                if (!CreateFolder(folderPath))
-                    return;
-
-                var URL = new Uri(address);
-
-                HtmlWeb web = new HtmlWeb();
-                ToScreen($"Requesting address: {URL}");
-
-                HtmlDocument document = web.Load(URL);
-
-                var aTagList = GetATagList(document, subDirectory);
-                var imgTagsList = GetImgList(document);
-                var nodeObject = new NodeObject(document.ParsedText, aTagList, imgTagsList);
-
-                using (WebClient client = new WebClient())
+                await nodeObject.ImgTags.ParallelForEachAsync(async imgTag =>
                 {
-                    await nodeObject.ImgTags.ParallelForEachAsync(async imgTag =>
-                    {
-                        ToScreen($"Downloading file: {domain}/{imgTag.Path}");
-                        client.DownloadFile(new Uri($"{domain}/{imgTag.Path}"), $"{folderPath}/{imgTag.FileName}");
-
-                    }, maxDegreeOfParallelism: 10);
-                }
-
-                await nodeObject.ATags.ParallelForEachAsync(async aTag =>
-                {
-                    await GetHtml(domain, aTag.Path, folderBase);
+                    ToScreen($"Downloading file: {domain}/{imgTag.Path}");
+                    client.DownloadFile(new Uri($"{domain}/{imgTag.Path}"), $"{folderPath}/{imgTag.FileName}");
 
                 }, maxDegreeOfParallelism: 10);
-
-                ToScreen($"Print HTML to disc. {folderPath}");
-
-                await PrintHtml(folderPath, nodeObject.ParsedText);
             }
-            catch (Exception e)
+
+            // Recursively get sub pages 
+            await nodeObject.ATags.ParallelForEachAsync(async aTag =>
             {
-                ToScreen(e.Message);
-                throw;
-            }
+                await GetHtml(domain, aTag.Path, folderBase);
+
+            }, maxDegreeOfParallelism: 10);
+
+            // Print HTML to disc
+            ToScreen($"Print HTML to disc. {folderPath}");
+            await PrintHtml(folderPath, nodeObject.ParsedText);
         }
 
         private static bool CreateFolder(string folderPath)
