@@ -29,7 +29,8 @@ If something goes wrong, a techical message will show. This might not be useful 
 
  - Installation
 The console application does not really needs to be installed as such. If you as a developer are giving the program to the customer, 
-simply build the solution in Visual Studio and give the "WebsiteDownloaderProgram.exe" to the customer. You could perhaps change the name of the file. 
+simply build the solution in Visual Studio (in release mode) and give the Release folder including "WebsiteDownloaderProgram.exe" to the customer. 
+You could perhaps change the name of the folder. 
 Also, remember that .exe files are sometimes looked upon as virus from mail clients and such, so it better to upload the program
 to some shared file server or similar.
 
