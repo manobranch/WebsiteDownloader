@@ -58,15 +58,13 @@ namespace WebsiteDownloaderProgram
             var nodeObject = new NodeObject(document.ParsedText, aTagList, imgTagsList);
 
             // Download files
-            using (WebClient client = new WebClient())
+            await nodeObject.ImgTags.ParallelForEachAsync(async imgTag =>
             {
-                await nodeObject.ImgTags.ParallelForEachAsync(async imgTag =>
-                {
-                    ToScreen($"Downloading file: {domain}/{imgTag.Path}");
-                    client.DownloadFile(new Uri($"{domain}/{imgTag.Path}"), $"{folderPath}/{imgTag.FileName}");
+                using WebClient client = new WebClient();
+                ToScreen($"Downloading file: {domain}/{imgTag.Path}");
+                await client.DownloadFileTaskAsync(new Uri($"{domain}/{imgTag.Path}"), $"{folderPath}/{imgTag.FileName}");
 
-                }, maxDegreeOfParallelism: 10);
-            }
+            }, maxDegreeOfParallelism: 10);
 
             // Recursively get sub pages 
             await nodeObject.ATags.ParallelForEachAsync(async aTag =>

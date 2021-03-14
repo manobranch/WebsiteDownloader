@@ -19,7 +19,6 @@ namespace WebsiteDownloaderProgram
                 var task = Downloader.Run(WebSiteAddress, RootFolderName);
                 task.Wait();
 
-
                 Console.Write(" - Ending program \nPress ENTER to quit");
                 Console.ReadLine();
             }
